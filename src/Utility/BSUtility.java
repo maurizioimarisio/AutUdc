@@ -20,6 +20,9 @@ public class BSUtility {
 	protected static final String OUTHEADER = "OUTHEADER";
 	protected static final String OUTSEG = "OUTSEG";
 		
+//	eree
+//	ertre
+	
 	public BSUtility() {
 		super();
 		try {
