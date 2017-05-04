@@ -13,20 +13,13 @@ public class BSUtility {
 	
 	 private Logger logger = null;
 	
-	protected static final String INHEADER = "INHEADER";
+	protected static final String INHEADER =   "INHEADER";
 	protected static final String OUTBST = "OUTBST";
 	protected static final String INPBST = "INPBST";
 	protected static final String OUTESI = "OUTESI";
 	protected static final String OUTHEADER = "OUTHEADER";
 	protected static final String OUTSEG = "OUTSEG";
 		
-//	protected static final String BS_CODICE_TIPO_CANALE = "52";
-//	protected static final String BS_CODICE_SOCIETA = "01";
-//	protected static final String BS_CODICE_SPORTELLO = "00700";
-//	protected static final String BS_CODICE_UO_RICH = "00700";
-//	protected static final String BS_DATA_CONT = "24052006";
-//	protected static final String BS_IND_MQ_SINCRONO_S = "S";
-	
 	public BSUtility() {
 		super();
 		try {
