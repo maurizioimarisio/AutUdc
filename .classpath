@@ -6,6 +6,7 @@
 	<classpathentry kind="con" path="com.genuitec.eclipse.j2eedt.core.J2EE14_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/lib_chci0"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/onlyConnector"/>
+	<classpathentry kind="con" path="org.apache.ivyde.eclipse.cpcontainer.IVYDE_CONTAINER/?project=War_AutUdc&amp;ivyXmlPath=ivy.xml&amp;confs=*"/>
 	<classpathentry kind="lib" path="WebRoot/WEB-INF/lib/YUDA.jar"/>
 	<classpathentry kind="lib" path="WebRoot/WEB-INF/lib/YUDC.jar"/>
 	<classpathentry kind="lib" path="WebRoot/WEB-INF/lib/YUE1.jar"/>

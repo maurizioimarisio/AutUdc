@@ -1,95 +1,238 @@
-<project name="chci0" default="all">
-    <description>
+<project name="chci0" xmlns:ivy="antlib:org.apache.ivy.ant" basedir="." default="all">
+
+	<description>
       Permette di compilare il Progetto WarAutUdc.
     </description>
-  <!-- set global properties for this build -->
-  <property file="build.properties" />
-  
-  <path id="project.class.path">
-      <fileset dir="${path_lib}">
-        <include name="**/*.jar"/>
-     </fileset>
-      <fileset dir="${j2ee_libpath}">
-        <include name="weblogic.jar"/>
-      </fileset>
-      <fileset dir="${conn_libpath}">
-        <include name="connector.jar"/>
-     </fileset>
-     <fileset dir="${jdo_libpath}">
-        <include name="JDOClasses.jar"/>
-     </fileset> 
 
-     <fileset dir="${jdo_jarpath}">
-        <include name="**/*.jar"/>
-     </fileset>
+	<!-- read properties file -->
+	<property environment="env" />
+	<property file="${env.ANTPROPERTIES}" />
+	<property file="build.properties" />
 
-      <fileset dir="${classDir}">
-        <include name="**/*.class"/>
-     </fileset>
-     <fileset dir="${oracleDir}">
-	  <include name="**/*.*"/>
-     </fileset>
+	<!-- <condition property="ivy.settings.file" value="${env.IVYSETTINGS}"> -->
+	 <condition property="ivy.settings.file" value="${path_vob}/AutUdc/ivy.xml">
+		<isset property="env.IVYSETTINGS" />
+	</condition>  
 
-     <fileset dir="${path_lib}">
-        <include name="persistence.jar"/>
-     </fileset>
+	<!-- imposta i file set -->
+	<path id="project.class.path">
+	
+		<fileset dir="${path_lib}">
+			<include name="**/*.jar" />
+		</fileset>
+		
+		<fileset dir="${path_provided_lib}">
+					<include name="**/*.jar" />
+				</fileset>
 
 
-     <fileset dir="${path_lib}">  
-        <include name="acronimi.jar"/>
-     </fileset>
+		<fileset dir="${j2ee_libpath}">
+			<include name="weblogic.jar" />
+		</fileset>
+
+		<fileset dir="${conn_libpath}">
+			<include name="connector.jar" />
+		</fileset>
+
+		<fileset dir="${jdo_libpath}">
+			<include name="JDOClasses.jar" />
+		</fileset>
+
+		<fileset dir="${jdo_jarpath}">
+			<include name="**/*.jar" />
+		</fileset>
+
+		<fileset dir="${classDir}">
+			<include name="**/*.class" />
+		</fileset>
+
+		<fileset dir="${oracleDir}">
+			<include name="**/*.*" />
+		</fileset>
+
+		<fileset dir="${path_lib}">
+			<include name="persistence.jar" />
+		</fileset>
+
+		<fileset dir="${path_lib}">
+			<include name="acronimi.jar" />
+		</fileset>
+	</path>
+
+	<!-- set global properties for tests -->
+	<property name="test.src.dir" value="${srcDir}/../test/Utility" />
+	<property name="test.build.dir" value="${classDir}/test" />
+
+	<path id="test.class.path">
+		<fileset dir="${path_lib}" />
+		<fileset dir="${path_provided_lib}" />
+		<pathelement location="${classDir}" />
+		<pathelement location="${testClassDir}" />
+	</path>
+
+	<!-- cond  TARGET -->
+	<!-- se è impostato il parametro NomeAmbienteTecnologico (SVIL) vuol dire che siamo in sviluppo -->
+	<!-- e setta la condition property : TestisSvil=TRUE -->
+	<!-- altrimenti siamo in system o produzione e setta la condition property TestisSvil=FALSE -->
+	<target name="TestisNotSvil">
+		<condition property="svil.property">
+			<isset property="NomeAmbienteLogico" />
+		</condition>
+	</target>
+	<target name="TestisSvil">
+		<condition property="svil.property">
+			<not>
+				<isset property="NomeAmbienteLogico" />
+			</not>
+		</condition>
+	</target>
+
+	<!-- cond  LOCALE -->
+	<!-- se non è impostato il parametro NomeAmbienteTecnologico (developETT) vuol dire che siamo in locale -->
+	<!-- e setta la condition property : TestisLocal=TRUE -->
+	<!-- altrimenti se è impostato il parametro NomeAmbienteTecnologico (developETT) vuol dire che siamo sulla POUN -->
+	<!-- quindi setta la condition property TestisLocal=FALSE -->
+	<target name="TestisNotLocal">
+		<condition property="local.property">
+			<isset property="NomeStreamSvil" />
+		</condition>
+	</target>
+	<target name="TestisLocal">
+		<condition property="local.property">
+			<not>
+				<isset property="NomeStreamSvil" />
+			</not>
+		</condition>
+	</target>
 
 
-</path>
-
-<target name="info" description="Info del progetto">
-  <echo>
-  Sistema Operativo... ${os.name}
-  Nome del progetto... ${ant.project.name}
-  </echo>
-</target>
-
-  <target name="init" description="crea le directory necessarie">
-     <delete dir="${classDir}"/>
-     <mkdir dir="${classDir}"/>
-  </target>
-
-
-<target name="compila" description="compila tutto">
-    <javac srcdir="${srcDir}" destdir="${classDir}"
-    			fork="yes"
-     			executable="${project_javahome}/bin/javac"
-     			compiler="${compiler}"
-     			target="${target}"
-     			source="1.6" >
-     			<include name="AutUdc/src/**/*.java"/>
-      <classpath refid="project.class.path"/>
-    </javac>
-
-    <copy todir="${path_jsp_destdircopy}" overwrite="true">
-        <fileset dir="${path_jsp_srcdircopy}"/>  
-    </copy>
-
-   <copy todir="${path_webxml_destdircopy}" overwrite="true">
-        <fileset dir="${path_webxml_srcdircopy}"/>
-    </copy>
-
-</target>
+	<!-- Ivy -->
+	<target name="ivy-check">
+		<available file="${path_provided_lib}/ivy-2.4.0.jar" property="ivy.isInstalled" />
+	</target>
+	<target name="bootstrap" description="Install ivy" depends="ivy-check,TestisNotLocal" unless="ivy.isInstalled">
+		<echo> Ivy non disponibile   </echo>
+	</target>
+	<target name="resolve" depends="bootstrap" description="Download dependencies and setup classpaths">
+		<!-- <ivy:resolve />
+		<echo> ivi resolve </echo>
+		<ivy:report todir='${reports.dir}/ivy' graph='false' xml='false' />
+		<ivy:cachepath pathid="compile.path" conf="compile" />
+		<ivy:cachepath pathid="test.path" conf="test" />
+		<ivy:cachepath pathid="build.path" conf="build" /> -->
+	</target>
 
 
-<target name="about" >
-<echo>
-Permette compilare il Progetto CHCI0
-Comandi disponibili:
+	<!-- visualizza informazioni del progetto -->
+	<target name="info" description="Info del progetto applicativo">
+		<echo>
+			Sistema Operativo... ${os.name}
+			Nome del progetto... ${ant.project.name}
+ 		 </echo>
+	</target>
 
-about                 Questo messaggio
-init                  Crea le directory necessarie
-compila               Compila tutti i sorgenti java (se necessario)
-all                   Esegue nell'ordine i comandi init e compila
-</echo>
-</target>
 
-<target name="all" depends="init,compila">
-</target>
+	<!-- Avvio vecchio. Con le antcall ogni volta fa il set delle property -->
+	<!-- quindi l'ho sostituito con il target "all" vecchia maniera -->
+	<target name="all_call">
+		<antcall target="info" />
+		<antcall target="init" />
+		<antcall target="compila" />
+		<antcall target="completa-war" />
+	</target>
 
+	<!-- unisce i target sotto un unico "all" -->
+	<target name="all" depends="info,init,compila,completa-war">
+	</target>
+
+
+	<target name="init" description="crea le directory necessarie">
+		<delete dir="${path_bin}" />
+		<delete dir="${classDir}" />
+		<mkdir dir="${classDir}" />
+
+		<delete dir="${testClassDir}" />
+		<mkdir dir="${testClassDir}" />
+
+		<delete dir="${reports.dir}" />
+		<mkdir dir="${reports.dir}" />
+	</target>
+
+	<!-- compila progetto con test-->
+	<target name="compilaSoloTest" description="compila tutto" if="svil.property" depends="TestisSvil,resolve,compila">
+		<echo>
+			testsrcdir...  ${test.src.dir}
+			testbuilddir... ${test.build.dir}
+ 		 </echo>
+		<javac srcdir="${test.src.dir}" debug="yes" destdir="${testClassDir}" fork="yes" executable="${project_javahome}/bin/javac" compiler="${compiler}" target="${target}" includeantruntime="no" source="1.6">
+			<include name="**/*Test.java" />
+			<classpath refid="test.class.path" />
+		</javac>
+
+	</target>
+
+	<!-- compila progetto senza test-->
+	<target name="compila" description="compila senza test" if="svil.property" depends="TestisSvil,resolve">
+		<echo>
+			srcdir...  ${srcDir}
+			destdir... ${classDir}
+ 		 </echo>
+		<javac srcdir="${srcDir}" debug="yes" destdir="${classDir}" fork="yes" executable="${project_javahome}/bin/javac" compiler="${compiler}" target="${target}" includeantruntime="no" source="1.6">
+			<include name="**/*.java" />
+			<exclude name="**/*Test.java" />
+			<classpath refid="project.class.path" />
+		</javac>
+
+	</target>
+
+
+	<!-- COMPLETA-WAR : Sposta le cose compilate nelle cartelle TARGET --> 
+	<!-- Prima lancia TestisSvil e test-run poi viene eseguito solo se : -->
+	<!-- TestisSvil è TRUE e i test-run non sono andati male (not test.failed) -->
+	<target name="completa-war" unless="test.failed" depends="TestisSvil,test-run">
+
+		<!-- sposta le jsp -->
+		<copy todir="${path_jsp_destdircopy}" overwrite="true">
+			<fileset dir="${path_jsp_srcdircopy}" />
+		</copy>
+
+		<!-- sposta il resto -->
+		<copy todir="${path_webxml_destdircopy}" overwrite="true">
+			<fileset dir="${path_webxml_srcdircopy}" />
+		</copy>
+
+	</target>
+
+
+	<!-- Run jUnit -->
+	<target name="test-run" depends="TestisSvil,compila,compilaSoloTest">
+		<junit printsummary="on" haltonfailure="yes" fork="true">
+			<formatter type="brief" usefile="false" />
+			<batchtest>
+				<fileset dir="${testClassDir}" includes="**/*Test.*" />
+			</batchtest>
+			<classpath refid="test.class.path" />
+		</junit>
+	</target>
+
+    <target name="get-deps" description="Download all dependencies" >
+       <ivy:resolve />          
+       <ivy:retrieve pattern="${path_provided_lib}/[artifact]-[revision].[ext]" />
+    </target>
+
+
+	<!-- visualizza l'HELP dei comandi disponibili -->
+	<target name="about">
+		<echo>
+			Permette compilare il Progetto CHCI0
+			Comandi disponibili:
+
+			about                 Questo messaggio
+			init                  Crea le directory necessarie
+			compila               Compila tutti i sorgenti java (se necessario)
+			all                   Esegue nell'ordine i comandi init e compila
+		</echo>
+	</target>
+
+	
 </project>
